@@ -1,8 +1,12 @@
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import { Link2, LogIn, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-// Placeholder Pages (To be built in Phase 10)
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+
+// Home (Landing Page)
 const Home = () => (
   <div className="container slide-up" style={{ textAlign: 'center', paddingTop: '10vh' }}>
     <h1 className="text-gradient" style={{ fontSize: '4rem', marginBottom: '20px' }}>
@@ -18,10 +22,6 @@ const Home = () => (
     </div>
   </div>
 );
-
-const Login = () => <div className="container slide-up" style={{paddingTop: '5vh'}}><h2>Login (Coming soon)</h2></div>;
-const Register = () => <div className="container slide-up" style={{paddingTop: '5vh'}}><h2>Register (Coming soon)</h2></div>;
-const Dashboard = () => <div className="container slide-up" style={{paddingTop: '5vh'}}><h2>Dashboard (Coming soon)</h2></div>;
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -81,9 +81,9 @@ function App() {
       <main style={{ flex: 1, paddingBottom: '40px' }}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login setAuth={setIsAuthenticated} />} />
+          <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register setAuth={setIsAuthenticated} />} />
+          <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
         </Routes>
       </main>
     </div>
