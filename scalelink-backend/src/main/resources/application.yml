@@ -16,9 +16,6 @@
 # - Profile-specific values OVERRIDE base values
 # ============================================================
 
-server:
-  port: 8081
-
 spring:
   application:
     name: scalelink
@@ -112,7 +109,7 @@ spring:
 # SERVER CONFIGURATION
 # ============================================
 server:
-  port: 8080
+  port: 8081
   servlet:
     context-path: /    # API base path (we use /api/v1/ in controllers)
   
@@ -157,7 +154,7 @@ scalelink:
     
   # URL shortening settings  
   url:
-    base-url: http://localhost:8080
+    base-url: http://localhost:8081
     code-length: 7               # Length of generated short codes
     max-custom-alias-length: 30
     default-expiration-days: 365 # Default expiration if not specified
