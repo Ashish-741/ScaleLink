@@ -30,7 +30,12 @@ function App() {
   // Simple check for token to determine auth state
   useEffect(() => {
     const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    if (token === 'undefined' || token === 'null') {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+    } else {
+      setIsAuthenticated(!!token);
+    }
   }, []);
 
   const handleLogout = () => {

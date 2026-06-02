@@ -11,7 +11,7 @@ async function fetchWithAuth(endpoint, options = {}) {
     ...options.headers,
   };
 
-  if (token) {
+  if (token && token !== 'undefined' && token !== 'null') {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
