@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { LogIn } from 'lucide-react';
 
 export default function Register({ setAuth }) {
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +17,7 @@ export default function Register({ setAuth }) {
     setIsLoading(true);
 
     try {
-      const response = await api.register({ name, email, password });
+      const response = await api.register({ username, email, password });
       localStorage.setItem('token', response.token);
       setAuth(true);
       navigate('/dashboard');
@@ -44,12 +44,13 @@ export default function Register({ setAuth }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Full Name</label>
+            <label className="form-label">Username</label>
             <input 
               type="text" 
               className="form-input" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g., johndoe_123"
               required 
             />
           </div>
