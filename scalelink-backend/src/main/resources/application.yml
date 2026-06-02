@@ -1,0 +1,184 @@
+# ============================================================
+# ScaleLink - Main Application Configuration
+# ============================================================
+# This is the BASE configuration. Profile-specific configs
+# (application-dev.yml, application-prod.yml) OVERRIDE values here.
+#
+# YAML vs PROPERTIES:
+# Spring Boot supports both application.properties and application.yml.
+# YAML is preferred because it supports nested/hierarchical config
+# and is more readable.
+#
+# HOW PROFILES WORK:
+# - application.yml → always loaded (base config)
+# - application-dev.yml → loaded when profile is "dev"
+# - application-prod.yml → loaded when profile is "prod"
+# - Profile-specific values OVERRIDE base values
+# ============================================================
+
+spring:
+  application:
+    name: scalelink
+
+  # ============================================
+  # DATABASE CONFIGURATION
+  # ============================================
+  datasource:
+    # JDBC URL format: jdbc:postgresql://host:port/database
+    url: jdbc:postgresql://localhost:5432/scalelink
+    username: scalelink
+    password: scalelink123
+    
+    # HikariCP connection pool (Spring Boot's default)
+    # HikariCP is the fastest JDBC connection pool in Java
+    hikari:
+      pool-name: ScaleLinkPool
+      maximum-pool-size: 15        # Max connections to DB
+      minimum-idle: 5              # Keep at least 5 connections ready
+      idle-timeout: 300000         # Close idle connections after 5 minutes
+      connection-timeout: 20000    # Wait max 20 seconds for a connection
+      max-lifetime: 1200000        # Recreate connections every 20 minutes
+
+  # ============================================
+  # JPA / HIBERNATE CONFIGURATION
+  # ============================================
+  jpa:
+    # Don't auto-generate DDL — we use Flyway for migrations
+    hibernate:
+      ddl-auto: none
+    
+    properties:
+      hibernate:
+        # Log SQL queries (useful for debugging, disable in prod)
+        show_sql: false
+        format_sql: true
+        
+        # PostgreSQL dialect — tells Hibernate how to generate SQL
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+        # Batch inserts for better performance
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+    
+    # Prevent LazyInitializationException in controllers
+    # (opens JPA session for the full request lifecycle)
+    open-in-view: false
+
+  # ============================================
+  # FLYWAY DATABASE MIGRATION
+  # ============================================
+  flyway:
+    enabled: true
+    # Where migration SQL files live
+    locations: classpath:db/migration
+    # Flyway tracks which migrations have run in this table
+    table: flyway_schema_history
+    # Automatically create the schema history table
+    baseline-on-migrate: true
+
+  # ============================================
+  # REDIS CONFIGURATION
+  # ============================================
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 5000              # Connection timeout in ms
+      lettuce:
+        pool:
+          max-active: 10         # Max active connections
+          max-idle: 5            # Max idle connections
+          min-idle: 2            # Min idle connections
+
+  # ============================================
+  # JACKSON (JSON SERIALIZATION)
+  # ============================================
+  jackson:
+    # Serialize dates as ISO 8601 strings, not timestamps
+    serialization:
+      write-dates-as-timestamps: false
+    # Don't fail if JSON has extra fields not in the DTO
+    deserialization:
+      fail-on-unknown-properties: false
+    # Include timezone in date serialization
+    default-property-inclusion: non_null
+
+# ============================================
+# SERVER CONFIGURATION
+# ============================================
+server:
+  port: 8080
+  servlet:
+    context-path: /    # API base path (we use /api/v1/ in controllers)
+  
+  # Tomcat tuning
+  tomcat:
+    max-threads: 200             # Max worker threads
+    accept-count: 100            # Queue size when all threads are busy
+    connection-timeout: 10000    # Close connection after 10s of no activity
+
+# ============================================
+# SPRING ACTUATOR (MONITORING)
+# ============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose these actuator endpoints
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      # Show detailed health info (DB status, Redis status, disk space)
+      show-details: always
+
+# ============================================
+# SPRINGDOC / SWAGGER
+# ============================================
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# ============================================
+# SCALELINK CUSTOM CONFIGURATION
+# ============================================
+scalelink:
+  # JWT settings
+  jwt:
+    secret: ThisIsASuperSecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLong!!
+    expiration: 3600000          # 1 hour in milliseconds
+    
+  # URL shortening settings  
+  url:
+    base-url: http://localhost:8080
+    code-length: 7               # Length of generated short codes
+    max-custom-alias-length: 30
+    default-expiration-days: 365 # Default expiration if not specified
+    
+  # Rate limiting settings
+  rate-limit:
+    enabled: true
+    algorithm: SLIDING_WINDOW    # FIXED_WINDOW, SLIDING_WINDOW, TOKEN_BUCKET
+    requests-per-minute: 60      # General API rate limit
+    url-creation-per-minute: 10  # URL creation rate limit
+    redirect-per-minute: 100     # Redirect rate limit
+
+  # Cache settings
+  cache:
+    url-ttl-hours: 24            # Cache URL mappings for 24 hours
+
+# ============================================
+# LOGGING CONFIGURATION
+# ============================================
+logging:
+  level:
+    root: INFO
+    com.scalelink: DEBUG                          # Our app: DEBUG level
+    org.springframework.security: INFO            # Security framework
+    org.hibernate.SQL: DEBUG                      # Log SQL queries
+    org.hibernate.type.descriptor.sql: TRACE      # Log SQL parameters
+    org.flywaydb: INFO                            # Flyway migrations

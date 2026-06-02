@@ -1,0 +1,90 @@
+# ============================================================
+# ScaleLink - Docker Compose (Local Development)
+# ============================================================
+# This file defines the infrastructure services needed for
+# local development: PostgreSQL and Redis.
+#
+# USAGE:
+#   Start:   docker compose up -d
+#   Stop:    docker compose down
+#   Logs:    docker compose logs -f
+#   Reset:   docker compose down -v  (deletes all data!)
+#
+# The -d flag runs containers in the background (detached mode).
+# The -v flag removes volumes (database data) — use for a clean start.
+# ============================================================
+
+services:
+
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    # Official PostgreSQL image from Docker Hub
+    image: postgres:15-alpine
+    # Alpine = smaller image (~80MB vs ~350MB for full)
+    
+    container_name: scalelink-postgres
+    
+    # Environment variables configure PostgreSQL on first start
+    environment:
+      POSTGRES_DB: scalelink          # Create this database on startup
+      POSTGRES_USER: scalelink        # Superuser username
+      POSTGRES_PASSWORD: scalelink123 # Superuser password (change in prod!)
+    
+    # Port mapping: host:container
+    # Access PostgreSQL on localhost:5432
+    ports:
+      - "5432:5432"
+    
+    # Named volume for data persistence
+    # Without this, all data is lost when the container stops
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    # Health check — Docker will mark the container as "healthy"
+    # only when PostgreSQL is ready to accept connections
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scalelink"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    # Restart automatically if the container crashes
+    restart: unless-stopped
+
+  # ============================================
+  # Redis Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    
+    container_name: scalelink-redis
+    
+    ports:
+      - "6379:6379"
+    
+    # Redis command with configuration:
+    # --appendonly yes: Enable AOF persistence (writes to disk)
+    # --maxmemory 256mb: Limit memory usage
+    # --maxmemory-policy allkeys-lru: When full, evict least recently used keys
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    
+    volumes:
+      - redis_data:/data
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    restart: unless-stopped
+
+# Named volumes — Docker manages these on your filesystem
+# Data persists across container restarts
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

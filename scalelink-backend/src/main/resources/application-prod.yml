@@ -1,0 +1,42 @@
+# ============================================================
+# ScaleLink - Production Profile Configuration
+# ============================================================
+# Activated with: --spring.profiles.active=prod
+# Uses environment variables for sensitive values.
+# NEVER hardcode secrets in production config.
+# ============================================================
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  jpa:
+    properties:
+      hibernate:
+        show_sql: false          # NEVER log SQL in production
+
+springdoc:
+  swagger-ui:
+    enabled: false               # Disable Swagger UI in production
+
+scalelink:
+  jwt:
+    secret: ${JWT_SECRET}        # MUST be set via environment variable
+  url:
+    base-url: ${BASE_URL:https://scalelink.onrender.com}
+
+logging:
+  level:
+    root: WARN
+    com.scalelink: INFO          # Less verbose in production
+    org.hibernate.SQL: WARN

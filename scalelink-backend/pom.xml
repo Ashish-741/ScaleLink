@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    ScaleLink Backend - Maven Project Configuration (pom.xml)
+    
+    WHAT IS POM.XML?
+    pom.xml (Project Object Model) is Maven's configuration file.
+    Think of it as package.json for Java. It defines:
+    - Project metadata (name, version, description)
+    - Dependencies (libraries we use)
+    - Build plugins (tools that compile/package our code)
+    - Java version and Spring Boot version
+    
+    HOW MAVEN WORKS:
+    1. You declare dependencies here (e.g., Spring Boot, PostgreSQL driver)
+    2. Maven downloads them from Maven Central (like npm registry)
+    3. Maven compiles your code and packages it into a JAR file
+    4. Maven runs tests, generates reports, etc.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        SPRING BOOT PARENT POM
+        This is like "extending" a base configuration.
+        Spring Boot's parent POM provides:
+        - Default dependency versions (so you don't have to specify versions)
+        - Plugin configurations
+        - Default properties
+        Without this, you'd have to manually manage 50+ library versions.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <!-- PROJECT METADATA -->
+    <groupId>com.scalelink</groupId>
+    <artifactId>scalelink-backend</artifactId>
+    <version>1.0.0</version>
+    <name>ScaleLink Backend</name>
+    <description>Production-grade URL Shortener Platform - Backend API</description>
+
+    <!-- PROPERTIES -->
+    <properties>
+        <java.version>17</java.version>
+        <jjwt.version>0.12.5</jjwt.version>
+    </properties>
+
+    <!--
+        DEPENDENCIES
+        Each dependency is a library we use. Spring Boot's parent POM
+        manages versions for most Spring-related dependencies, so we
+        don't specify versions for those (they're already defined).
+    -->
+    <dependencies>
+
+        <!-- ============================================== -->
+        <!-- SPRING BOOT STARTERS                           -->
+        <!-- A "starter" bundles multiple related libraries  -->
+        <!-- ============================================== -->
+
+        <!--
+            spring-boot-starter-web
+            WHAT: Adds Spring MVC, embedded Tomcat server, Jackson (JSON)
+            WHY: We're building a REST API — this is the foundation
+            WHAT IT INCLUDES:
+            - Spring MVC (controllers, request mapping)
+            - Embedded Tomcat (no need to install a separate server)
+            - Jackson (Java objects → JSON and back)
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-data-jpa
+            WHAT: Adds JPA (Java Persistence API) + Hibernate ORM
+            WHY: Maps Java objects to database tables automatically
+            INSTEAD OF: Writing raw SQL for every CRUD operation
+            EXAMPLE: userRepository.save(user) → INSERT INTO users (...)
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-security
+            WHAT: Adds Spring Security framework
+            WHY: Handles authentication, authorization, CORS, CSRF
+            NOTE: Once added, ALL endpoints are secured by default.
+                  We'll configure which ones are public in SecurityConfig.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-validation
+            WHAT: Adds Bean Validation (Hibernate Validator)
+            WHY: Validates request bodies automatically
+            EXAMPLE: @NotBlank, @Email, @Size annotations on DTOs
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-data-redis
+            WHAT: Adds Redis client (Lettuce) + Spring Data Redis
+            WHY: Caching URL lookups, rate limiting counters
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-actuator
+            WHAT: Adds production monitoring endpoints
+            WHY: Health checks, metrics, environment info
+            ENDPOINTS: /actuator/health, /actuator/metrics, /actuator/info
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-aop
+            WHAT: Adds Aspect-Oriented Programming support
+            WHY: Cross-cutting concerns like logging, performance monitoring
+            EXAMPLE: Log every method call in service layer without modifying each method
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!-- ============================================== -->
+        <!-- DATABASE                                        -->
+        <!-- ============================================== -->
+
+        <!--
+            PostgreSQL JDBC Driver
+            WHAT: Allows Java to connect to PostgreSQL
+            WHY: We're using PostgreSQL as our database
+            RUNTIME SCOPE: Only needed at runtime, not at compile time
+        -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--
+            Flyway Core
+            WHAT: Database migration tool
+            WHY: Version-controls our database schema
+            HOW: Reads SQL files from db/migration/ and executes them in order
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
+        <!--
+            Flyway PostgreSQL extension
+            WHAT: PostgreSQL-specific features for Flyway
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- ============================================== -->
+        <!-- SECURITY / JWT                                  -->
+        <!-- ============================================== -->
+
+        <!--
+            JJWT (Java JWT)
+            WHAT: Library to create and verify JWT tokens
+            WHY: Our authentication mechanism
+            THREE MODULES:
+            - jjwt-api: Interfaces (compile time)
+            - jjwt-impl: Implementation (runtime)
+            - jjwt-jackson: JSON serialization for JWT (runtime)
+        -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============================================== -->
+        <!-- API DOCUMENTATION                               -->
+        <!-- ============================================== -->
+
+        <!--
+            SpringDoc OpenAPI
+            WHAT: Auto-generates Swagger UI from your controllers
+            WHY: Interactive API documentation at /swagger-ui.html
+            HOW: Scans your @RestController classes and generates docs
+        -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
+        <!-- ============================================== -->
+        <!-- QR CODE                                         -->
+        <!-- ============================================== -->
+
+        <!--
+            ZXing (Zebra Crossing)
+            WHAT: Google's barcode/QR code library
+            WHY: Generate QR codes for short URLs
+        -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <!-- ============================================== -->
+        <!-- UTILITY                                         -->
+        <!-- ============================================== -->
+
+        <!--
+            Lombok
+            WHAT: Reduces boilerplate code via annotations
+            WHY: Auto-generates getters, setters, constructors, builders
+            EXAMPLE: @Data generates getters, setters, toString, equals, hashCode
+            NOTE: Requires IDE plugin (IntelliJ has built-in support)
+        -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ============================================== -->
+        <!-- TESTING                                         -->
+        <!-- ============================================== -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- BUILD CONFIGURATION -->
+    <build>
+        <plugins>
+            <!--
+                Spring Boot Maven Plugin
+                WHAT: Packages the application as an executable JAR
+                WHY: Creates a self-contained JAR with embedded Tomcat
+                RUN: mvn spring-boot:run (development)
+                BUILD: mvn clean package (creates JAR for deployment)
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <!-- Lombok is compile-time only, exclude from JAR -->
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
