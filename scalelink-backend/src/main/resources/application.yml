@@ -16,6 +16,9 @@
 # - Profile-specific values OVERRIDE base values
 # ============================================================
 
+server:
+  port: 8081
+
 spring:
   application:
     name: scalelink
