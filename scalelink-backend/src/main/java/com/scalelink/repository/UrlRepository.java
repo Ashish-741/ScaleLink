@@ -1,6 +1,9 @@
 package com.scalelink.repository;
 
 import com.scalelink.entity.Url;
+import com.scalelink.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +14,12 @@ import java.util.Optional;
  */
 @Repository
 public interface UrlRepository extends JpaRepository<Url, Long> {
+
+    /**
+     * Fetch all URLs created by a specific user, ordered by creation date descending.
+     * Supports pagination.
+     */
+    Page<Url> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 
     /**
      * Find a URL by its short code (e.g., 'aB3x7Kp').

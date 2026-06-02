@@ -12,6 +12,9 @@ import com.scalelink.util.Base62Encoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,5 +113,22 @@ public class UrlService {
             code = Base62Encoder.generateRandom(codeLength);
         } while (urlRepository.existsByShortCode(code));
         return code;
+    }
+
+    /**
+     * Fetch a paginated list of URLs for the currently authenticated user.
+     * Used for the frontend dashboard.
+     */
+    @Transactional(readOnly = true)
+    public Page<UrlResponse> getUserUrls(int page, int size) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Url> urlPage = urlRepository.findByUserOrderByCreatedAtDesc(currentUser, pageable);
+
+        // Map the Entity Page to a DTO Page
+        return urlPage.map(url -> UrlResponse.fromEntity(url, baseUrl));
     }
 }
