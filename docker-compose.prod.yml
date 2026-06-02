@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: scalelink-postgres-prod
+    environment:
+      POSTGRES_DB: scalelink
+      POSTGRES_USER: scalelink
+      POSTGRES_PASSWORD: scalelink123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scalelink -d scalelink"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: scalelink-redis-prod
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_prod:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. Spring Boot Backend
+  backend:
+    build: 
+      context: ./scalelink-backend
+      dockerfile: Dockerfile
+    container_name: scalelink-backend-prod
+    ports:
+      - "8081:8081"
+    environment:
+      # Override the DB and Redis URLs to point to the container names inside the Docker network
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/scalelink
+      - SPRING_DATA_REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 4. React Frontend (Served by NGINX)
+  frontend:
+    build:
+      context: ./scalelink-frontend
+      dockerfile: Dockerfile
+    container_name: scalelink-frontend-prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prod:
+  redis_data_prod:
