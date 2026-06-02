@@ -25,7 +25,7 @@ spring:
   # ============================================
   datasource:
     # JDBC URL format: jdbc:postgresql://host:port/database
-    url: jdbc:postgresql://localhost:5432/scalelink
+    url: jdbc:postgresql://localhost:5433/scalelink
     username: scalelink
     password: scalelink123
     

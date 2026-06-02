@@ -33,9 +33,9 @@ services:
       POSTGRES_PASSWORD: scalelink123 # Superuser password (change in prod!)
     
     # Port mapping: host:container
-    # Access PostgreSQL on localhost:5432
+    # Access PostgreSQL on localhost:5433 (changed from 5432 to avoid native Windows Postgres conflict)
     ports:
-      - "5432:5432"
+      - "5433:5432"
     
     # Named volume for data persistence
     # Without this, all data is lost when the container stops

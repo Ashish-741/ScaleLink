@@ -9,6 +9,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.scalelink.security.JwtAuthenticationFilter;
 
 /**
  * Security Configuration (Initial Setup)
@@ -45,7 +47,7 @@ public class SecurityConfig {
      * call adds or modifies a security filter in the chain.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
         http
             // CSRF: Disabled because we use JWT (stateless API)
             // CSRF protection is for cookie-based sessions where a malicious
@@ -82,7 +84,9 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             );
 
-        // Phase 5 will add: .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            // Add JWT filter before the standard Spring Security authentication filter
+            // We check the JWT token BEFORE Spring tries to do its default authentication
+            http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

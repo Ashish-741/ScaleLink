@@ -173,14 +173,8 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
 
-        <!--
-            Flyway PostgreSQL extension
-            WHAT: PostgreSQL-specific features for Flyway
-        -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
+        <!-- Flyway database specific modules are not needed in Flyway 9 (Spring Boot 3.2 default)
+             as PostgreSQL support is built into flyway-core. -->
 
         <!-- ============================================== -->
         <!-- SECURITY / JWT                                  -->
