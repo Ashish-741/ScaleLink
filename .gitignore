@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+*.class
+*.jar
+!**/wrapper/*.jar
+
+# Environment
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# React
+scalelink-frontend/node_modules/
+scalelink-frontend/dist/
+scalelink-frontend/.env
+
+# Docker
+docker-compose.override.yml
+
+# Coverage
+coverage/
+*.lcov
