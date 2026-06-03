@@ -1,93 +1,78 @@
 # ScaleLink Deployment Guide
 
-Congratulations! Your application is fully dockerized and ready for production. There are two common ways to deploy this application: using a **Virtual Private Server (VPS)** (like AWS EC2, DigitalOcean) or using a **Platform as a Service (PaaS)** (like Render, Railway).
-
-Here is the step-by-step guide for both.
+Congratulations! Your application is fully dockerized and ready for production. Below are the three best ways to deploy this application.
 
 ---
 
-## Option 1: Deploying to a VPS (AWS EC2 / DigitalOcean Droplet)
-*Best for: Learning DevOps, having full control, and running the exact `docker-compose.prod.yml` we built.*
+## Option 1: The "Ultimate Permanent Free" Stack (Recommended)
+*Best for: Portfolio projects. Maximizes performance and ensures your database never expires by combining the best free-tiers on the internet.*
 
-### Prerequisites
-1. Create an account on AWS, DigitalOcean, or Linode.
-2. Spin up a basic Linux server (Ubuntu 22.04 LTS). A 1GB RAM / 1 CPU server is enough for a portfolio project.
-3. SSH into your new server.
+### Step 1: Database (Neon.tech)
+Neon is a serverless PostgreSQL platform. It gives you a permanent 500MB free database.
+1. Go to [Neon.tech](https://neon.tech) and sign up with GitHub.
+2. Create a new project (Name: `scalelink-db`, Postgres Version: 15).
+3. Once created, copy the **Connection String** from the dashboard.
+   - It looks like: `postgresql://neondb_owner:password@ep-cool-snowflake-123.us-east-2.aws.neon.tech/neondb?sslmode=require`
+   - **Important:** Change `postgresql://` to `jdbc:postgresql://` for Spring Boot.
 
-### Step-by-Step
+### Step 2: Cache (Upstash)
+Upstash is a serverless Redis platform. It's completely free (up to 10k requests/day) and never expires.
+1. Go to [Upstash.com](https://upstash.com) and sign up with GitHub.
+2. Click **Create Database** under Redis. (Name: `scalelink-redis`, Type: Regional, uncheck TLS/SSL for simplicity, or leave checked if your Java client supports `rediss://`).
+3. Scroll down to the **Java** section and copy the Hostname, Port, and Password. (Or just copy the Endpoint URL).
 
-**1. Install Docker & Docker Compose on the server**
-```bash
-sudo apt update
-sudo apt install docker.io docker-compose -y
-```
+### Step 3: Backend (Render Web Service)
+Render is the best place to host a free Dockerized Java Spring Boot application.
+1. Go to [Render.com](https://render.com) and create a **Web Service**.
+2. Connect your `ScaleLink` GitHub repository.
+3. Configuration:
+   - **Name:** `scalelink-backend`
+   - **Root Directory:** `scalelink-backend`
+   - **Environment:** `Docker`
+   - **Instance Type:** `Free`
+4. Add these Environment Variables:
+   - `SPRING_DATASOURCE_URL` = Paste your Neon JDBC Connection String (from Step 1).
+   - `SPRING_DATA_REDIS_HOST` = Paste your Upstash Endpoint / Hostname.
+   - `SPRING_DATA_REDIS_PORT` = Paste your Upstash Port (usually `37397` or similar).
+   - `SPRING_DATA_REDIS_PASSWORD` = Paste your Upstash Password.
+   - `JWT_SECRET` = Make up a secure random string (e.g., `MySuperSecretKeyForJWTThatIsVeryLong123!`).
+5. Click **Create**. Once it's Live, copy the public URL (e.g., `https://scalelink-backend.onrender.com`).
 
-**2. Clone your repository**
-```bash
-git clone https://github.com/Ashish-741/ScaleLink.git
-cd ScaleLink
-```
-
-**3. Set up Environment Variables**
-Create a `.env` file in the root directory to hold your secrets securely (do NOT commit this file to GitHub).
-```bash
-nano .env
-```
-Paste the following (change the passwords for production!):
-```env
-# Database
-POSTGRES_USER=scalelink
-POSTGRES_PASSWORD=your_super_secret_db_password
-
-# Spring Boot
-SPRING_PROFILES_ACTIVE=prod
-JWT_SECRET=MakeSureThisIsAtLeast256BitsLongAndVerySecure!!
-```
-
-**4. Start the Application!**
-Run the orchestrator in detached mode (`-d`):
-```bash
-sudo docker-compose -f docker-compose.prod.yml up -d
-```
-Docker will pull the necessary images, build your Java and React containers, and start them. 
-
-**5. Access your app**
-Find your server's Public IP address and go to `http://YOUR_SERVER_IP` in your browser. NGINX will serve your React app, which will securely communicate with your backend container!
+### Step 4: Frontend (Vercel)
+Vercel is the gold standard for frontend hosting. It has a massive global CDN and is permanently free.
+1. Go to [Vercel.com](https://vercel.com) and sign up with GitHub.
+2. Click **Add New Project** and import your `ScaleLink` GitHub repository.
+3. Configuration:
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** Edit this and select `scalelink-frontend`.
+4. Open the **Environment Variables** section and add:
+   - **Name:** `VITE_API_BASE_URL`
+   - **Value:** Paste your Render backend URL and add `/api/v1` to the end (e.g., `https://scalelink-backend.onrender.com/api/v1`).
+5. Click **Deploy**. Vercel handles all SPA routing automatically!
 
 ---
 
-## Option 2: Deploying to Render (PaaS)
-*Best for: Zero-maintenance, automatic deployments when you push to GitHub.*
+## Option 2: Deploying entirely on Render (PaaS)
+*Best for: Keeping everything under one single platform. Note that the free Postgres database expires after 90 days.*
 
-Render doesn't use `docker-compose`; instead, you deploy each service individually and connect them via Render's internal private network.
-
-### 1. Database & Cache
-- In the Render Dashboard, create a **PostgreSQL** instance. (Save the "Internal Database URL").
-- Create a **Redis** instance. (Save the "Internal Redis URL").
-
-### 2. Spring Boot Backend
-- Create a **Web Service** on Render and connect your GitHub repo.
-- **Root Directory**: `scalelink-backend`
-- **Environment**: `Docker` (Render will automatically detect your `Dockerfile`)
-- **Environment Variables**:
-  - `SPRING_DATASOURCE_URL`: The Internal DB URL from step 1 (e.g., `jdbc:postgresql://postgres-abc:5432/scalelink`)
-  - `SPRING_DATA_REDIS_HOST`: The Internal Redis URL
-  - `JWT_SECRET`: Your secure secret string.
-
-### 3. React Frontend
-- Create a **Static Site** on Render.
-- **Root Directory**: `scalelink-frontend`
-- **Build Command**: `npm install && npm run build`
-- **Publish Directory**: `dist`
-- **Redirects/Rewrites**: 
-  - Since React Router is a Single Page Application, add a Rewrite rule in Render:
-  - **Source**: `/*`
-  - **Destination**: `/index.html`
-  - **Action**: `Rewrite`
+1. **Database & Cache:** Create a free PostgreSQL and Redis instance on Render. Copy their Internal URLs.
+2. **Backend:** Create a Web Service pointing to `scalelink-backend`. Use the `Docker` environment. Set `SPRING_DATASOURCE_URL` and `SPRING_DATA_REDIS_HOST` to the Internal URLs from step 1.
+3. **Frontend:** Create a Static Site pointing to `scalelink-frontend`. Build command: `npm install && npm run build`. Publish directory: `dist`. Set `VITE_API_BASE_URL` to your Render backend URL. Add a Rewrite rule (`/*` to `/index.html`) in the Redirects tab.
 
 ---
 
-## 🔒 Post-Deployment Checklist
-- [ ] **Buy a Domain**: Buy a domain name (like `scalelink.com`) and point its A-Record to your server's IP address.
-- [ ] **SSL/HTTPS**: If using a VPS, install `certbot` to generate a free Let's Encrypt SSL certificate for your NGINX container. If using Render, SSL is handled automatically!
-- [ ] **Update CORS**: In `CorsConfig.java`, update `allowedOrigins` to your new production domain instead of `localhost`.
+## Option 3: Deploying to a VPS (AWS EC2 / DigitalOcean Droplet)
+*Best for: Learning pure DevOps, having full control of the Linux environment, and running Docker Compose.*
+
+1. Spin up a basic Linux server (Ubuntu 22.04 LTS).
+2. Install Docker and Docker Compose (`sudo apt install docker.io docker-compose`).
+3. Clone your repository: `git clone https://github.com/Ashish-741/ScaleLink.git`.
+4. Create a `.env` file in the root directory:
+   ```env
+   POSTGRES_USER=scalelink
+   POSTGRES_PASSWORD=your_secure_password
+   SPRING_PROFILES_ACTIVE=prod
+   JWT_SECRET=YourSecureKey123!
+   ```
+5. Run `sudo docker-compose -f docker-compose.prod.yml up -d`.
+6. Configure NGINX and Let's Encrypt SSL on the host machine to point your domain to the Docker container.
