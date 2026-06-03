@@ -154,7 +154,7 @@ scalelink:
     
   # URL shortening settings  
   url:
-    base-url: http://localhost:8081
+    base-url: ${APP_BASE_URL:http://localhost:8081}
     code-length: 7               # Length of generated short codes
     max-custom-alias-length: 30
     default-expiration-days: 365 # Default expiration if not specified
